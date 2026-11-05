@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="it" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Calcetto Manager - FUT Edition</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <style>
+    .glow-gold { box-shadow: 0 0 25px rgba(234, 179, 8, 0.35); }
+    .glow-silver { box-shadow: 0 0 20px rgba(148, 163, 184, 0.25); }
+    .glow-bronze { box-shadow: 0 0 18px rgba(180, 83, 9, 0.25); }
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 font-sans antialiased min-h-screen flex justify-center selection:bg-emerald-500 selection:text-black">
+
+  <!-- Mobile Container Frame -->
+  <div class="w-full max-w-md min-h-screen bg-zinc-900 border-x border-zinc-800 flex flex-col relative pb-20 shadow-2xl">
+
+    <!-- Top Navigation Header -->
+    <header class="bg-zinc-950/90 backdrop-blur-md px-4 pt-3 pb-2.5 border-b border-zinc-800 flex items-center justify-between sticky top-0 z-30">
+      <div class="flex items-center gap-2">
+        <div class="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-500 to-green-400 flex items-center justify-center font-black text-black text-base shadow-[0_0_15px_rgba(34,197,94,0.4)]">
+          ⚽
+        </div>
+        <div>
+          <h1 class="font-black text-sm tracking-wide text-white flex items-center gap-1">
+            CALCETTO <span class="text-emerald-400 font-mono text-[10px] px-1 py-0.2 rounded bg-emerald-950 border border-emerald-500/40">FUT</span>
+          </h1>
+          <p class="text-[10px] text-zinc-400">Organizzazione & Pagelle</p>
+        </div>
+      </div>
+
+      <!-- Auth User Pill & Logout -->
+      <div id="user-header-pill" class="flex items-center gap-2">
+        <button onclick="openAuthModal()" class="px-3 py-1 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all">
+          Accedi
+        </button>
+      </div>
+    </header>
+
+    <!-- Main View Area -->
+    <main class="flex-1 p-4 space-y-4 overflow-y-auto no-scrollbar">
+
+      <!-- ================= TAB 1: LA MIA CARTA ================= -->
+      <section id="tab-my-stats" class="tab-pane space-y-4">
+        <!-- Contenuto se l'utente non è loggato -->
+        <div id="unauth-view" class="bg-zinc-950 border border-zinc-800 rounded-3xl p-6 text-center space-y-3">
+          <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-3xl">
+            👤
+          </div>
+          <h2 class="text-base font-black text-white">Accedi o Crea la tua Carta</h2>
+          <p class="text-xs text-zinc-400 leading-relaxed">
+            Per visualizzare la tua carta, votare nei sondaggi e partecipare alle partite, accedi con la tua email o registrati con la tua autovalutazione iniziale.
+          </p>
+          <div class="pt-2 flex flex-col gap-2">
+            <button onclick="openAuthModal(false)" class="w-full py-3 rounded-2xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs uppercase tracking-wider">
+              Accedi con Email
+            </button>
+            <button onclick="openAuthModal(true)" class="w-full py-3 rounded-2xl bg-zinc-800 hover:bg-zinc-700 text-white font-bold text-xs">
+              Crea Nuova Carta (Registrati)
+            </button>
+          </div>
+        </div>
+
+        <!-- Contenuto utente loggato -->
+        <div id="auth-view" class="hidden space-y-4">
+          <!-- Hero Player Card -->
+          <div id="my-card-container" class="flex justify-center py-1">
+            <!-- Rendered via JS -->
+          </div>
+
+          <!-- Quick Stats Breakdown -->
+          <div class="grid grid-cols-3 gap-2">
+            <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-3 text-center">
+              <span class="text-xs text-zinc-400 font-semibold block">Partite</span>
+              <span id="my-matches" class="text-xl font-black text-white">0</span>
+            </div>
+            <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-3 text-center">
+              <span class="text-xs text-zinc-400 font-semibold block">Vittorie</span>
+              <span id="my-wins" class="text-xl font-black text-emerald-400">0 (0%)</span>
+            </div>
+            <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-3 text-center">
+              <span class="text-xs text-zinc-400 font-semibold block">MVP</span>
+              <span id="my-mvps" class="text-xl font-black text-amber-400">0 🏆</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ================= TAB 2: SPOGLIATOIO (SOLO UTENTI REALI REGISTRATI) ================= -->
+      <section id="tab-locker-room" class="tab-pane hidden space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-sm font-black text-white uppercase tracking-wider">Spogliatoio (<span id="player-count">0</span>)</h2>
+          <span class="text-xs font-mono text-emerald-400">Giocatori Reali</span>
+        </div>
+
+        <!-- Role Filter Buttons -->
+        <div class="flex gap-1.5 overflow-x-auto no-scrollbar py-1">
+          <button onclick="setLockerFilter('ALL')" class="role-btn px-3 py-1 rounded-xl text-xs font-bold bg-emerald-500 text-black">Tutti</button>
+          <button onclick="setLockerFilter('ATTACCANTE')" class="role-btn px-3 py-1 rounded-xl text-xs font-bold bg-zinc-800 text-zinc-300">ATT</button>
+          <button onclick="setLockerFilter('DIFENSORE')" class="role-btn px-3 py-1 rounded-xl text-xs font-bold bg-zinc-800 text-zinc-300">DIF</button>
+          <button onclick="setLockerFilter('PORTIERE')" class="role-btn px-3 py-1 rounded-xl text-xs font-bold bg-zinc-800 text-zinc-300">POR</button>
+          <button onclick="setLockerFilter('UNIVERSALE')" class="role-btn px-3 py-1 rounded-xl text-xs font-bold bg-zinc-800 text-zinc-300">UNI</button>
+        </div>
+
+        <!-- Se non ci sono ancora abbastanza utenti -->
+        <div id="empty-locker" class="hidden bg-zinc-950 border border-zinc-800 rounded-2xl p-5 text-center space-y-2">
+          <span class="text-2xl">📢</span>
+          <p class="text-xs font-bold text-white">Nessun altro giocatore ancora registrato!</p>
+          <p class="text-[11px] text-zinc-400">Invia il link ai tuoi amici per farli registrare con la loro autovalutazione.</p>
+        </div>
+
+        <!-- Cards Grid -->
+        <div id="locker-grid" class="grid grid-cols-2 gap-3 pt-1">
+          <!-- Rendered via JS -->
+        </div>
+      </section>
+
+      <!-- ================= TAB 3: ORGANIZZAZIONE & PARTITA ================= -->
+      <section id="tab-match" class="tab-pane hidden space-y-4">
+        
+        <!-- Sotto-Navigazione: Sondaggio Giorni vs Generatore Squadre -->
+        <div class="flex bg-zinc-950 p-1 rounded-2xl border border-zinc-800">
+          <button id="subtab-btn-poll" onclick="switchMatchSubtab('poll')" class="flex-1 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-black transition-all">
+            📅 Sondaggio Giorni
+          </button>
+          <button id="subtab-btn-teams" onclick="switchMatchSubtab('teams')" class="flex-1 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-all">
+            ⚽ Squadre & Match
+          </button>
+        </div>
+
+        <!-- SUBTAB A: SONDAGGIO ORGANIZZAZIONE GIORNI -->
+        <div id="match-subtab-poll" class="space-y-3">
+          <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-2">
+            <div class="flex items-center justify-between">
+              <h3 class="font-black text-sm text-white">Disponibilità Settimanale</h3>
+              <span class="text-[10px] font-mono text-emerald-400 bg-emerald-950 border border-emerald-500/40 px-2 py-0.5 rounded-full">Obiettivo 10</span>
+            </div>
+            <p class="text-xs text-zinc-400">
+              Vota i giorni in cui puoi giocare. Quando un giorno raggiunge 10 giocatori, potete confermare la partita!
+            </p>
+          </div>
+
+          <!-- Lista Giorni e Voti -->
+          <div id="poll-days-container" class="space-y-2.5">
+            <!-- Rendered via JS -->
+          </div>
+
+          <button onclick="submitPollVotes()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-black font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all">
+            💾 Salva la Mia Disponibilità
+          </button>
+        </div>
+
+        <!-- SUBTAB B: CONVOCAZIONI, GENERATORE SQUADRE & RISULTATO -->
+        <div id="match-subtab-teams" class="space-y-4 hidden">
+          <!-- Convocazioni -->
+          <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-black text-sm text-white">Giocatori Presenti</h3>
+              <span id="selected-counter" class="text-xs font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold border border-emerald-500/40">
+                0 Selezionati
+              </span>
+            </div>
+            <p class="text-xs text-zinc-400">
+              Seleziona i presenti per la partita di oggi (es. 10 per calcetto 5 vs 5).
+            </p>
+
+            <div id="selection-checklist" class="max-h-52 overflow-y-auto no-scrollbar space-y-1.5 pr-1">
+              <!-- Rendered via JS -->
+            </div>
+
+            <button onclick="handleGenerateTeams()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-black font-black text-xs uppercase tracking-wider shadow-[0_0_20px_rgba(16,185,129,0.35)] transition-all">
+              ⚡ Bilancia Squadre & Predici Match
+            </button>
+          </div>
+
+          <!-- Squadre Generate & Win Probability -->
+          <div id="teams-result-box" class="space-y-4 hidden">
+            <!-- Win Meter -->
+            <div class="bg-gradient-to-b from-zinc-900 to-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-3">
+              <div class="flex justify-between items-center text-xs font-bold uppercase tracking-wider">
+                <span class="text-emerald-400">Squadra Verde</span>
+                <span class="text-zinc-500 font-mono text-[11px]">PREDIZIONE VITTORIA</span>
+                <span class="text-sky-400">Squadra Blu</span>
+              </div>
+
+              <div class="space-y-1">
+                <div class="w-full h-3 rounded-full overflow-hidden bg-zinc-800 flex">
+                  <div id="pred-bar-a" class="bg-emerald-500 transition-all duration-700" style="width: 50%"></div>
+                  <div id="pred-bar-b" class="bg-sky-500 transition-all duration-700" style="width: 50%"></div>
+                </div>
+                <div class="flex justify-between text-xs font-black">
+                  <span id="pred-text-a" class="text-emerald-400">50.0%</span>
+                  <span id="pred-fairness" class="text-[10px] text-zinc-400 font-normal bg-zinc-800 px-2 py-0.5 rounded">Equità 98%</span>
+                  <span id="pred-text-b" class="text-sky-400">50.0%</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Formazioni -->
+            <div class="grid grid-cols-2 gap-2.5">
+              <div class="bg-zinc-950 border border-emerald-500/40 rounded-2xl p-3 space-y-2">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-1.5">
+                  <span class="font-black text-xs text-emerald-400 uppercase">Verdi</span>
+                  <span id="team-a-ovr" class="text-xs font-mono font-bold text-white bg-zinc-900 px-1.5 py-0.5 rounded">OVR 75</span>
+                </div>
+                <div id="team-a-players" class="space-y-1 text-xs"></div>
+              </div>
+
+              <div class="bg-zinc-950 border border-sky-500/40 rounded-2xl p-3 space-y-2">
+                <div class="flex items-center justify-between border-b border-zinc-800 pb-1.5">
+                  <span class="font-black text-xs text-sky-400 uppercase">Blu</span>
+                  <span id="team-b-ovr" class="text-xs font-mono font-bold text-white bg-zinc-900 px-1.5 py-0.5 rounded">OVR 75</span>
+                </div>
+                <div id="team-b-players" class="space-y-1 text-xs"></div>
+              </div>
+            </div>
+
+            <!-- Risultato Partita & Sblocco Pagelle -->
+            <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-3">
+              <h4 class="text-xs font-black uppercase text-zinc-300 text-center">Fischio Finale • Inserisci Risultato</h4>
+              <div class="flex items-center justify-center gap-4">
+                <div class="text-center">
+                  <span class="text-[11px] text-emerald-400 font-bold block mb-1">Verdi</span>
+                  <input id="match-score-a" type="number" min="0" value="7" class="w-16 h-12 text-center text-2xl font-black bg-zinc-900 border border-emerald-500/50 rounded-xl text-white">
+                </div>
+                <span class="text-xl font-black text-zinc-600">-</span>
+                <div class="text-center">
+                  <span class="text-[11px] text-sky-400 font-bold block mb-1">Blu</span>
+                  <input id="match-score-b" type="number" min="0" value="5" class="w-16 h-12 text-center text-2xl font-black bg-zinc-900 border border-sky-500/50 rounded-xl text-white">
+                </div>
+              </div>
+
+              <button onclick="openRatingsModal()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-500 hover:from-amber-400 hover:to-yellow-400 text-black font-black text-xs uppercase tracking-wider shadow-lg transition-all">
+                ⭐ Sblocca & Invia Pagelle Post-Match
+              </button>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <!-- ================= TAB 4: STORICO & CLASSIFICA ================= -->
+      <section id="tab-leaderboard" class="tab-pane hidden space-y-4">
+        <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-4 space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="font-black text-sm text-white flex items-center gap-1.5">
+              <span>🏆</span> Classifica Generale Gruppo
+            </h3>
+            <span class="text-[11px] text-zinc-500">Calcetto FUT</span>
+          </div>
+
+          <div id="leaderboard-list" class="space-y-1.5 text-xs">
+            <!-- Rendered via JS -->
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <!-- Modal Autenticazione (Email Login & Registrazione con Autovalutazione Iniziale) -->
+    <div id="auth-modal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-5 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto no-scrollbar">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+          <h3 id="auth-title" class="font-black text-sm text-white">Accedi con la tua Email</h3>
+          <button onclick="closeAuthModal()" class="w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 hover:text-white font-bold flex items-center justify-center text-xs">✕</button>
+        </div>
+
+        <!-- Form Login -->
+        <div id="login-form" class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-zinc-300 mb-1">Email</label>
+            <input id="login-email" type="email" placeholder="mario@amici.it" class="w-full p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:border-emerald-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-zinc-300 mb-1">Password</label>
+            <input id="login-password" type="password" placeholder="••••••••" class="w-full p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:border-emerald-500 outline-none">
+          </div>
+          <button onclick="handleLogin()" class="w-full py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xs uppercase tracking-wider transition-all">
+            Accedi Subito
+          </button>
+
+          <p class="text-center text-xs text-zinc-400 pt-2">
+            Non hai ancora un account?{' '}
+            <button onclick="toggleAuthMode(true)" class="text-emerald-400 font-bold hover:underline">
+              Crea Nuova Carta Giocatore
+            </button>
+          </p>
+        </div>
+
+        <!-- Form Registrazione con Autovalutazione Iniziale -->
+        <div id="register-form" class="space-y-3 hidden">
+          <div>
+            <label class="block text-xs font-bold text-zinc-300 mb-1">Email</label>
+            <input id="reg-email" type="email" placeholder="latuaemail@amici.it" class="w-full p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:border-emerald-500 outline-none">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-zinc-300 mb-1">Password</label>
+            <input id="reg-password" type="password" placeholder="Password sicura" class="w-full p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:border-emerald-500 outline-none">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-bold text-zinc-300 mb-1">Nome e Cognome</label>
+              <input id="reg-name" type="text" placeholder="Mario Rossi" class="w-full p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:border-emerald-500 outline-none">
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-zinc-300 mb-1">Nickname</label>
+              <input id="reg-nick" type="text" placeholder="Bomber" class="w-full p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:border-emerald-500 outline-none">
+            </div>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-zinc-300 mb-1">Ruolo Preferito</label>
+            <select id="reg-pos" onchange="updateRegisterOvrPreview()" class="w-full p-2.5 rounded-xl bg-zinc-950 border border-zinc-800 text-white text-xs focus:border-emerald-500 outline-none">
+              <option value="ATTACCANTE">Attaccante</option>
+              <option value="DIFENSORE">Difensore</option>
+              <option value="PORTIERE">Portiere</option>
+              <option value="UNIVERSALE" selected>Universale</option>
+            </select>
+          </div>
+
+          <!-- SEZIONE AUTOVALUTAZIONE INIZIALE -->
+          <div class="pt-2 border-t border-zinc-800 space-y-2.5 bg-zinc-950/80 p-3 rounded-2xl border border-zinc-800">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-black text-white uppercase tracking-wider">La Tua Autovalutazione (1-99)</span>
+              <span id="reg-ovr-badge" class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-emerald-500 text-black">
+                OVR 64
+              </span>
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex justify-between text-[11px]">
+                <span class="text-rose-400 font-bold">Attacco (Tiro, Dribbling)</span>
+                <span id="reg-atk-val" class="font-mono text-white font-bold">70</span>
+              </div>
+              <input type="range" min="1" max="99" value="70" id="reg-atk" oninput="updateRegisterOvrPreview()" class="w-full accent-rose-500 h-1.5 bg-zinc-800 rounded appearance-none cursor-pointer">
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex justify-between text-[11px]">
+                <span class="text-sky-400 font-bold">Difesa (Contrasti, Fisico)</span>
+                <span id="reg-def-val" class="font-mono text-white font-bold">65</span>
+              </div>
+              <input type="range" min="1" max="99" value="65" id="reg-def" oninput="updateRegisterOvrPreview()" class="w-full accent-sky-500 h-1.5 bg-zinc-800 rounded appearance-none cursor-pointer">
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex justify-between text-[11px]">
+                <span class="text-emerald-400 font-bold">Porta (Tuffo, Parate)</span>
+                <span id="reg-gk-val" class="font-mono text-white font-bold">45</span>
+              </div>
+              <input type="range" min="1" max="99" value="45" id="reg-gk" oninput="updateRegisterOvrPreview()" class="w-full accent-emerald-500 h-1.5 bg-zinc-800 rounded appearance-none cursor-pointer">
+            </div>
+          </div>
+
+          <button onclick="handleRegister()" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-black font-black text-xs uppercase tracking-wider transition-all">
+            Crea la Mia Carta e Unisciti
+          </button>
+          <p class="text-center text-xs text-zinc-400 pt-1">
+            Hai già un account?{' '}
+            <button onclick="toggleAuthMode(false)" class="text-emerald-400 font-bold hover:underline">
+              Accedi
+            </button>
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Pagelle Peer-to-Peer -->
+    <div id="ratings-modal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col justify-end">
+      <div class="bg-zinc-900 border-t border-zinc-800 rounded-t-3xl max-h-[85vh] flex flex-col p-4 shadow-2xl">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+          <div>
+            <h3 class="font-black text-sm text-white flex items-center gap-1.5">
+              <span>⚡</span> Pagelle Post-Match
+            </h3>
+            <span class="text-[11px] text-zinc-400">Vota i compagni e gli avversari di oggi</span>
+          </div>
+          <button onclick="closeRatingsModal()" class="w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 hover:text-white font-bold flex items-center justify-center text-xs">✕</button>
+        </div>
+
+        <div id="ratings-form-content" class="flex-1 overflow-y-auto no-scrollbar py-3 space-y-4"></div>
+
+        <div class="pt-3 border-t border-zinc-800">
+          <button onclick="handleSubmitRatings()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 to-green-600 text-black font-black text-xs uppercase tracking-wider shadow-lg">
+            Conferma e Aggiorna Carte 🔥
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation Bar (4 Tab) -->
+    <nav class="fixed bottom-0 left-0 right-0 max-w-md mx-auto z-40 bg-zinc-950/95 backdrop-blur-xl border-t border-zinc-800 px-2 py-2">
+      <div class="grid grid-cols-4 gap-1">
+        <button onclick="switchTab('my-stats')" class="nav-btn active flex flex-col items-center py-1 text-emerald-400" data-tab="my-stats">
+          <span class="text-lg">👤</span>
+          <span class="text-[10px] font-bold mt-0.5">La Mia Carta</span>
+        </button>
+        <button onclick="switchTab('locker-room')" class="nav-btn flex flex-col items-center py-1 text-zinc-500 hover:text-zinc-300" data-tab="locker-room">
+          <span class="text-lg">👥</span>
+          <span class="text-[10px] font-bold mt-0.5">Spogliatoio</span>
+        </button>
+        <button onclick="switchTab('match')" class="nav-btn flex flex-col items-center py-1 text-zinc-500 hover:text-zinc-300" data-tab="match">
+          <span class="text-lg">⚽</span>
+          <span class="text-[10px] font-bold mt-0.5">Partita</span>
+        </button>
+        <button onclick="switchTab('leaderboard')" class="nav-btn flex flex-col items-center py-1 text-zinc-500 hover:text-zinc-300" data-tab="leaderboard">
+          <span class="text-lg">🏆</span>
+          <span class="text-[10px] font-bold mt-0.5">Classifica</span>
+        </button>
+      </div>
+    </nav>
+
+  </div>
+
+  <!-- Client Application Logic -->
+  <script>
+    let authToken = localStorage.getItem('calcetto_token') || null;
+    let currentUser = null;
+    let allPlayers = [];
+    let selectedPlayerIds = new Set();
+    let currentBalanceResult = null;
+    let currentRoleFilter = 'ALL';
+    let pollData = null;
+    let mySelectedPollOptions = new Set();
+
+    async function initApp() {
+      await loadCurrentUser();
+      await loadPlayers();
+      await loadPoll();
+      await loadLeaderboard();
+      updateRegisterOvrPreview();
+    }
+
+    async function apiRequest(endpoint, options = {}) {
+      const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      const res = await fetch(endpoint, { ...options, headers });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.detail || 'Errore nella richiesta.');
+      }
+      return data;
+    }
+
+    async function loadCurrentUser() {
+      try {
+        const data = await apiRequest('/api/auth/me');
+        if (data.authenticated) {
+          currentUser = data.user;
+          currentUser.card = data.card;
+          document.getElementById('unauth-view').classList.add('hidden');
+          document.getElementById('auth-view').classList.remove('hidden');
+          renderMyCard();
+        } else {
+          currentUser = null;
+          document.getElementById('unauth-view').classList.remove('hidden');
+          document.getElementById('auth-view').classList.add('hidden');
+        }
+        updateHeaderUserPill();
+      } catch (err) {
+        currentUser = null;
+        document.getElementById('unauth-view').classList.remove('hidden');
+        document.getElementById('auth-view').classList.add('hidden');
+        updateHeaderUserPill();
+      }
+    }
+
+    function updateHeaderUserPill() {
+      const pill = document.getElementById('user-header-pill');
+      if (currentUser) {
+        pill.innerHTML = `
+          <div class="flex items-center gap-1.5 bg-zinc-900 border border-zinc-800 rounded-full px-2.5 py-1">
+            <div class="w-5 h-5 rounded-full bg-emerald-500 text-black text-[10px] font-black flex items-center justify-center">
+              ${(currentUser.full_name || currentUser.fullName || 'U').charAt(0)}
+            </div>
+            <span class="text-xs font-bold text-zinc-200">${currentUser.nickname || currentUser.full_name}</span>
+            <button onclick="handleLogout()" title="Disconnetti" class="text-zinc-500 hover:text-rose-400 text-xs ml-1 font-bold">✕</button>
+          </div>
+        `;
+      } else {
+        pill.innerHTML = `
+          <button onclick="openAuthModal()" class="px-3 py-1 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all">
+            Accedi
+          </button>
+        `;
+      }
+    }
+
+    async function loadPlayers() {
+      try {
+        allPlayers = await apiRequest('/api/players');
+        document.getElementById('player-count').innerText = allPlayers.length;
+
+        if (allPlayers.length === 0) {
+          document.getElementById('empty-locker').classList.remove('hidden');
+        } else {
+          document.getElementById('empty-locker').classList.add('hidden');
+        }
+
+        renderLockerGrid();
+        renderSelectionChecklist();
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // SONDAGGIO ORGANIZZAZIONE GIORNI
+    async function loadPoll() {
+      try {
+        const data = await apiRequest('/api/poll');
+        if (!data.hasPoll) return;
+        pollData = data;
+        mySelectedPollOptions = new Set();
+
+        const container = document.getElementById('poll-days-container');
+        container.innerHTML = data.options.map(opt => {
+          if (opt.hasVoted) mySelectedPollOptions.add(opt.id);
+          const isSelected = mySelectedPollOptions.has(opt.id);
+          const isTen = opt.voteCount >= 10;
+
+          return `
+            <div class="bg-zinc-950 border ${isTen ? 'border-amber-400/80 bg-amber-950/20' : isSelected ? 'border-emerald-500/50 bg-emerald-950/20' : 'border-zinc-800'} rounded-2xl p-3.5 space-y-2 transition-all">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2.5">
+                  <input type="checkbox" onchange="togglePollOption('${opt.id}')" ${isSelected ? 'checked' : ''} class="w-4 h-4 accent-emerald-500 rounded cursor-pointer">
+                  <span class="font-bold text-sm text-white">${opt.day_label}</span>
+                </div>
+                <div class="flex items-center gap-1.5">
+                  ${isTen ? '<span class="text-[10px] font-black bg-amber-500 text-black px-2 py-0.5 rounded-full uppercase">🔥 10 Pronti!</span>' : ''}
+                  <span class="text-xs font-mono font-bold ${isTen ? 'text-amber-400' : 'text-emerald-400'} bg-zinc-900 px-2 py-0.5 rounded-lg border border-zinc-800">
+                    ${opt.voteCount} / 10
+                  </span>
+                </div>
+              </div>
+
+              <!-- Barra di avanzamento -->
+              <div class="w-full bg-zinc-900 h-1.5 rounded-full overflow-hidden">
+                <div class="${isTen ? 'bg-amber-400' : 'bg-emerald-500'} h-full rounded-full transition-all duration-500" style="width: ${Math.min(100, (opt.voteCount / 10) * 100)}%"></div>
+              </div>
+
+              <!-- Lista Avatar di chi ha votato -->
+              ${opt.voters && opt.voters.length > 0 ? `
+                <div class="flex flex-wrap gap-1 pt-1">
+                  ${opt.voters.map(v => `
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-zinc-900 border border-zinc-800 text-zinc-300">
+                      ${v.nickname || v.full_name} (${v.overall})
+                    </span>
+                  `).join('')}
+                </div>
+              ` : '<span class="text-[10px] text-zinc-600">Nessun voto ancora</span>'}
+
+              ${isTen ? `
+                <button onclick="usePollVotersForMatch('${opt.id}')" class="w-full mt-2 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-black text-xs uppercase tracking-wider">
+                  ⚽ Convocati Pronti: Genera Squadre per ${opt.day_label}
+                </button>
+              ` : ''}
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function togglePollOption(optId) {
+      if (mySelectedPollOptions.has(optId)) mySelectedPollOptions.delete(optId);
+      else mySelectedPollOptions.add(optId);
+    }
+
+    async function submitPollVotes() {
+      if (!currentUser) return openAuthModal();
+      try {
+        await apiRequest('/api/poll/vote', {
+          method: 'POST',
+          body: JSON.stringify({ optionIds: Array.from(mySelectedPollOptions) })
+        });
+        await loadPoll();
+        alert('Disponibilità salvata con successo!');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function usePollVotersForMatch(optId) {
+      if (!pollData) return;
+      const opt = pollData.options.find(o => o.id === optId);
+      if (!opt || !opt.voters) return;
+
+      selectedPlayerIds = new Set(opt.voters.slice(0, 10).map(v => v.id));
+      switchMatchSubtab('teams');
+      renderSelectionChecklist();
+      handleGenerateTeams();
+    }
+
+    function switchMatchSubtab(subtab) {
+      const isPoll = subtab === 'poll';
+      document.getElementById('match-subtab-poll').classList.toggle('hidden', !isPoll);
+      document.getElementById('match-subtab-teams').classList.toggle('hidden', isPoll);
+
+      const btnPoll = document.getElementById('subtab-btn-poll');
+      const btnTeams = document.getElementById('subtab-btn-teams');
+
+      if (isPoll) {
+        btnPoll.className = 'flex-1 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-black transition-all';
+        btnTeams.className = 'flex-1 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-all';
+      } else {
+        btnTeams.className = 'flex-1 py-2 rounded-xl text-xs font-bold bg-emerald-500 text-black transition-all';
+        btnPoll.className = 'flex-1 py-2 rounded-xl text-xs font-bold text-zinc-400 hover:text-white transition-all';
+      }
+    }
+
+    // Render della Carta Giocatore (FUT Style)
+    function renderCardHTML(player, size = 'md') {
+      const card = player.card || player;
+      const isGold = card.tier === 'ORO';
+      const isSilver = card.tier === 'ARGENTO';
+
+      const bg = isGold 
+        ? 'from-amber-950 via-zinc-900 to-stone-950 border-amber-400/70 glow-gold' 
+        : isSilver 
+        ? 'from-slate-800 via-zinc-900 to-neutral-950 border-slate-400/70 glow-silver'
+        : 'from-amber-950/80 via-zinc-900 to-stone-950 border-amber-700/60 glow-bronze';
+
+      const tierBadge = isGold ? 'bg-amber-500 text-black' : isSilver ? 'bg-slate-300 text-black' : 'bg-amber-800 text-amber-200';
+      const pos = card.preferred_position || card.preferredPosition || 'UNIVERSALE';
+      const roleColor = pos === 'ATTACCANTE' ? 'text-rose-400 border-rose-500/30'
+        : pos === 'DIFENSORE' ? 'text-sky-400 border-sky-500/30'
+        : pos === 'PORTIERE' ? 'text-emerald-400 border-emerald-500/30'
+        : 'text-purple-400 border-purple-500/30';
+
+      const roleShort = pos.slice(0, 3);
+      const name = player.nickname || player.full_name || player.fullName || 'Giocatore';
+      const atk = card.stat_attack || card.attack || 60;
+      const def = card.stat_defense || card.defense || 60;
+      const gk = card.stat_goalkeeper || card.goalkeeper || 50;
+      const ovr = card.overall || 60;
+
+      if (size === 'sm') {
+        return `
+          <div class="relative rounded-2xl bg-gradient-to-b ${bg} border p-3 flex flex-col justify-between">
+            <div class="flex items-center justify-between">
+              <div>
+                <span class="text-2xl font-black text-white leading-none">${ovr}</span>
+                <span class="text-[9px] font-bold block px-1 py-0.2 rounded border ${roleColor} mt-0.5">${roleShort}</span>
+              </div>
+              <div class="w-10 h-10 rounded-xl bg-zinc-950 border border-zinc-700 flex items-center justify-center font-black text-emerald-400">
+                ${name.charAt(0)}
+              </div>
+            </div>
+            <div class="my-1.5 text-center">
+              <strong class="text-xs text-white block truncate uppercase">${name}</strong>
+            </div>
+            <div class="grid grid-cols-3 gap-1 bg-black/40 rounded-lg p-1 text-[10px] text-center font-bold">
+              <div><span class="text-zinc-500 block text-[8px]">ATT</span><span class="text-rose-400">${atk}</span></div>
+              <div><span class="text-zinc-500 block text-[8px]">DIF</span><span class="text-sky-400">${def}</span></div>
+              <div><span class="text-zinc-500 block text-[8px]">POR</span><span class="text-emerald-400">${gk}</span></div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Hero Card (Large)
+      return `
+        <div class="relative w-64 rounded-3xl bg-gradient-to-b ${bg} border-2 p-4 shadow-2xl overflow-hidden">
+          <div class="relative z-10 flex items-start justify-between">
+            <div class="flex flex-col items-center">
+              <span class="text-5xl font-black text-white tracking-tighter leading-none">${ovr}</span>
+              <span class="mt-1 font-bold text-xs px-2 py-0.5 rounded border ${roleColor}">${roleShort}</span>
+              <span class="text-[9px] font-extrabold uppercase px-2 py-0.5 rounded-full mt-1.5 ${tierBadge}">${card.tier}</span>
+            </div>
+            <div class="w-24 h-24 rounded-2xl bg-zinc-950 border-2 border-emerald-500/40 flex items-center justify-center font-black text-4xl text-emerald-400 shadow-inner">
+              ${name.charAt(0)}
+            </div>
+          </div>
+
+          <div class="relative z-10 text-center my-3 border-b border-zinc-800 pb-2">
+            <h3 class="font-black text-white text-base tracking-wide uppercase">${name}</h3>
+            <p class="text-zinc-400 text-xs">${player.email || player.full_name || ''}</p>
+          </div>
+
+          <div class="relative z-10 grid grid-cols-3 gap-2 bg-black/50 backdrop-blur-sm rounded-xl p-2.5 border border-zinc-800/80">
+            <div class="flex flex-col items-center">
+              <span class="text-[9px] font-bold text-zinc-400">ATT</span>
+              <span class="text-lg font-black text-rose-400">${atk}</span>
+              <div class="w-full bg-zinc-800 h-1 rounded-full mt-1 overflow-hidden">
+                <div class="bg-rose-500 h-full" style="width: ${atk}%"></div>
+              </div>
+            </div>
+            <div class="flex flex-col items-center">
+              <span class="text-[9px] font-bold text-zinc-400">DIF</span>
+              <span class="text-lg font-black text-sky-400">${def}</span>
+              <div class="w-full bg-zinc-800 h-1 rounded-full mt-1 overflow-hidden">
+                <div class="bg-sky-500 h-full" style="width: ${def}%"></div>
+              </div>
+            </div>
+            <div class="flex flex-col items-center">
+              <span class="text-[9px] font-bold text-zinc-400">POR</span>
+              <span class="text-lg font-black text-emerald-400">${gk}</span>
+              <div class="w-full bg-zinc-800 h-1 rounded-full mt-1 overflow-hidden">
+                <div class="bg-emerald-500 h-full" style="width: ${gk}%"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="relative z-10 flex items-center justify-between text-xs text-zinc-400 mt-3 font-medium">
+            <span>Presenze: <strong class="text-white">${card.matches_played || card.matchesPlayed || 0}</strong></span>
+            <span>Vittorie: <strong class="text-emerald-400">${card.matches_won || card.matchesWon || 0}</strong></span>
+          </div>
+        </div>
+      `;
+    }
+
+    function renderMyCard() {
+      if (!currentUser) return;
+      document.getElementById('my-card-container').innerHTML = renderCardHTML(currentUser, 'lg');
+      const card = currentUser.card || {};
+      const matches = card.matches_played || card.matchesPlayed || 0;
+      const wins = card.matches_won || card.matchesWon || 0;
+      const mvps = card.mvp_awards || card.mvpAwards || 0;
+
+      document.getElementById('my-matches').innerText = matches;
+      document.getElementById('my-wins').innerText = `${wins} (${matches > 0 ? Math.round((wins/matches)*100) : 0}%)`;
+      document.getElementById('my-mvps').innerText = `${mvps} 🏆`;
+    }
+
+    function renderLockerGrid() {
+      const grid = document.getElementById('locker-grid');
+      const filtered = currentRoleFilter === 'ALL' 
+        ? allPlayers 
+        : allPlayers.filter(p => (p.card.preferred_position || p.card.preferredPosition) === currentRoleFilter);
+
+      grid.innerHTML = filtered.map(p => renderCardHTML(p, 'sm')).join('');
+    }
+
+    function setLockerFilter(role) {
+      currentRoleFilter = role;
+      document.querySelectorAll('.role-btn').forEach(btn => {
+        btn.className = 'role-btn px-3 py-1 rounded-xl text-xs font-bold bg-zinc-800 text-zinc-300';
+      });
+      event.target.className = 'role-btn px-3 py-1 rounded-xl text-xs font-bold bg-emerald-500 text-black';
+      renderLockerGrid();
+    }
+
+    function renderSelectionChecklist() {
+      const container = document.getElementById('selection-checklist');
+      if (allPlayers.length === 0) {
+        container.innerHTML = '<p class="text-xs text-zinc-500 text-center py-4">Nessun giocatore registrato ancora.</p>';
+        return;
+      }
+      container.innerHTML = allPlayers.map(p => {
+        const isChecked = selectedPlayerIds.has(p.id);
+        const card = p.card || {};
+        return `
+          <label class="flex items-center justify-between p-2 rounded-xl bg-zinc-900 border ${isChecked ? 'border-emerald-500/40 bg-emerald-950/20' : 'border-zinc-800'} cursor-pointer">
+            <div class="flex items-center gap-2">
+              <input type="checkbox" onchange="togglePlayerSelection('${p.id}')" ${isChecked ? 'checked' : ''} class="w-4 h-4 accent-emerald-500 rounded">
+              <span class="text-xs font-bold text-white">${p.nickname || p.fullName}</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-[11px] font-mono">
+              <span class="text-zinc-500">${(card.preferred_position || card.preferredPosition || '').slice(0, 3)}</span>
+              <span class="font-bold text-emerald-400 bg-zinc-950 px-1.5 py-0.5 rounded">OVR ${card.overall}</span>
+            </div>
+          </label>
+        `;
+      }).join('');
+      document.getElementById('selected-counter').innerText = `${selectedPlayerIds.size} Selezionati`;
+    }
+
+    function togglePlayerSelection(id) {
+      if (selectedPlayerIds.has(id)) selectedPlayerIds.delete(id);
+      else selectedPlayerIds.add(id);
+      renderSelectionChecklist();
+    }
+
+    async function handleGenerateTeams() {
+      if (selectedPlayerIds.size < 2 || selectedPlayerIds.size % 2 !== 0) {
+        return alert('Seleziona un numero pari di giocatori (minimo 2).');
+      }
+      try {
+        const playerIds = Array.from(selectedPlayerIds);
+        const res = await apiRequest('/api/matches/generate', {
+          method: 'POST',
+          body: JSON.stringify({ playerIds })
+        });
+        currentBalanceResult = res;
+
+        document.getElementById('pred-bar-a').style.width = `${res.winProbabilityA}%`;
+        document.getElementById('pred-bar-b').style.width = `${res.winProbabilityB}%`;
+        document.getElementById('pred-text-a').innerText = `${res.winProbabilityA}%`;
+        document.getElementById('pred-text-b').innerText = `${res.winProbabilityB}%`;
+        document.getElementById('pred-fairness').innerText = `Equità ${res.balanceFairness}%`;
+
+        document.getElementById('team-a-ovr').innerText = `OVR ${res.teamAOverall}`;
+        document.getElementById('team-b-ovr').innerText = `OVR ${res.teamBOverall}`;
+
+        document.getElementById('team-a-players').innerHTML = res.teamA.map(p => `
+          <div class="flex justify-between p-1.5 rounded-lg bg-zinc-900 border border-zinc-800">
+            <span class="font-bold text-zinc-200">${p.nickname || p.full_name}</span>
+            <span class="font-mono text-emerald-400 font-bold">${p.overall}</span>
+          </div>
+        `).join('');
+
+        document.getElementById('team-b-players').innerHTML = res.teamB.map(p => `
+          <div class="flex justify-between p-1.5 rounded-lg bg-zinc-900 border border-zinc-800">
+            <span class="font-bold text-zinc-200">${p.nickname || p.full_name}</span>
+            <span class="font-mono text-sky-400 font-bold">${p.overall}</span>
+          </div>
+        `).join('');
+
+        document.getElementById('teams-result-box').classList.remove('hidden');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function openRatingsModal() {
+      if (!currentUser) return openAuthModal();
+      if (!currentBalanceResult) return;
+      const allMatchPlayers = [...currentBalanceResult.teamA, ...currentBalanceResult.teamB];
+
+      // Escludi l'utente corrente dalla votazione
+      const rateable = allMatchPlayers.filter(p => p.id !== currentUser.id);
+
+      const container = document.getElementById('ratings-form-content');
+      container.innerHTML = rateable.map(p => `
+        <div class="bg-zinc-950 border border-zinc-800 rounded-2xl p-3 space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="font-bold text-white text-xs">${p.nickname || p.full_name}</span>
+            <span id="vote-val-${p.id}" class="text-xs font-mono font-bold text-emerald-400 bg-zinc-900 px-2 py-0.5 rounded">6.5</span>
+          </div>
+          <div class="space-y-1">
+            <input type="range" min="1.0" max="10.0" step="0.5" value="6.5" 
+              oninput="document.getElementById('vote-val-${p.id}').innerText = parseFloat(this.value).toFixed(1)"
+              id="slider-${p.id}"
+              class="w-full accent-emerald-400 h-1.5 bg-zinc-800 rounded appearance-none cursor-pointer">
+          </div>
+        </div>
+      `).join('');
+
+      document.getElementById('ratings-modal').classList.remove('hidden');
+    }
+
+    function closeRatingsModal() {
+      document.getElementById('ratings-modal').classList.add('hidden');
+    }
+
+    async function handleSubmitRatings() {
+      if (!currentUser) return;
+      try {
+        const scoreA = parseInt(document.getElementById('match-score-a').value) || 0;
+        const scoreB = parseInt(document.getElementById('match-score-b').value) || 0;
+
+        const allMatchPlayers = [...currentBalanceResult.teamA, ...currentBalanceResult.teamB];
+        const rateable = allMatchPlayers.filter(p => p.id !== currentUser.id);
+
+        const ratings = rateable.map(p => {
+          const slider = document.getElementById(`slider-${p.id}`);
+          const val = slider ? parseFloat(slider.value) : 6.5;
+          return {
+            ratedPlayerId: p.id,
+            ratingAttack: val,
+            ratingDefense: val,
+            ratingGoalkeeper: val
+          };
+        });
+
+        await apiRequest('/api/matches/submit-ratings', {
+          method: 'POST',
+          body: JSON.stringify({
+            matchId: `match-${Date.now()}`,
+            scoreTeamA: scoreA,
+            scoreTeamB: scoreB,
+            teamAPlayerIds: currentBalanceResult.teamA.map(p => p.id),
+            teamBPlayerIds: currentBalanceResult.teamB.map(p => p.id),
+            ratings
+          })
+        });
+
+        closeRatingsModal();
+        await loadCurrentUser();
+        await loadPlayers();
+        await loadLeaderboard();
+        switchTab('my-stats');
+        alert('🎉 Pagelle registrate! Le statistiche delle carte sono state aggiornate.');
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function loadLeaderboard() {
+      try {
+        const rows = await apiRequest('/api/leaderboard');
+        const list = document.getElementById('leaderboard-list');
+        if (rows.length === 0) {
+          list.innerHTML = '<p class="text-xs text-zinc-500 text-center py-4">Nessun giocatore in classifica ancora.</p>';
+          return;
+        }
+        list.innerHTML = rows.map((p, idx) => {
+          const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : `${idx + 1}.`;
+          return `
+            <div class="flex items-center justify-between p-2 rounded-xl bg-zinc-900 border border-zinc-800">
+              <div class="flex items-center gap-2">
+                <span class="w-5 font-bold text-center text-xs text-amber-400">${medal}</span>
+                <div>
+                  <strong class="text-white text-xs block">${p.nickname || p.full_name}</strong>
+                  <span class="text-[10px] text-zinc-500">${p.preferred_position} • ${p.matches_won} Vittorie</span>
+                </div>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[9px] font-black px-1.5 py-0.5 rounded ${p.tier === 'ORO' ? 'bg-amber-500 text-black' : p.tier === 'ARGENTO' ? 'bg-slate-300 text-black' : 'bg-amber-900 text-amber-200'}">${p.tier}</span>
+                <span class="font-black text-white text-sm font-mono">${p.overall}</span>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Calcolo anteprima Overall in registrazione con autovalutazione
+    function updateRegisterOvrPreview() {
+      const atk = parseInt(document.getElementById('reg-atk').value) || 70;
+      const def = parseInt(document.getElementById('reg-def').value) || 65;
+      const gk = parseInt(document.getElementById('reg-gk').value) || 45;
+      const pos = document.getElementById('reg-pos').value || 'UNIVERSALE';
+
+      document.getElementById('reg-atk-val').innerText = atk;
+      document.getElementById('reg-def-val').innerText = def;
+      document.getElementById('reg-gk-val').innerText = gk;
+
+      let ovr = 60;
+      if (pos === 'ATTACCANTE') ovr = Math.round(atk * 0.55 + def * 0.35 + gk * 0.10);
+      else if (pos === 'DIFENSORE') ovr = Math.round(atk * 0.30 + def * 0.60 + gk * 0.10);
+      else if (pos === 'PORTIERE') ovr = Math.round(atk * 0.10 + def * 0.20 + gk * 0.70);
+      else ovr = Math.round(atk * 0.45 + def * 0.45 + gk * 0.10);
+
+      ovr = Math.max(1, Math.min(99, ovr));
+      const tier = ovr >= 85 ? 'ORO' : ovr >= 70 ? 'ARGENTO' : 'BRONZO';
+
+      const badge = document.getElementById('reg-ovr-badge');
+      badge.innerText = `OVR ${ovr} • ${tier}`;
+      badge.className = `text-xs font-mono font-bold px-2 py-0.5 rounded ${tier === 'ORO' ? 'bg-amber-400 text-black' : tier === 'ARGENTO' ? 'bg-slate-300 text-black' : 'bg-amber-800 text-amber-200'}`;
+    }
+
+    function openAuthModal(isRegister = false) {
+      document.getElementById('auth-modal').classList.remove('hidden');
+      toggleAuthMode(isRegister);
+    }
+    function closeAuthModal() {
+      document.getElementById('auth-modal').classList.add('hidden');
+    }
+    function toggleAuthMode(isRegister) {
+      document.getElementById('login-form').classList.toggle('hidden', isRegister);
+      document.getElementById('register-form').classList.toggle('hidden', !isRegister);
+      document.getElementById('auth-title').innerText = isRegister ? 'Crea Carta con Autovalutazione' : 'Accedi con la tua Email';
+      if (isRegister) updateRegisterOvrPreview();
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value;
+      const password = document.getElementById('login-password').value;
+      if (!email || !password) return alert('Inserisci email e password.');
+
+      try {
+        const res = await apiRequest('/api/auth/login', {
+          method: 'POST',
+          body: JSON.stringify({ email, password })
+        });
+        authToken = res.token;
+        localStorage.setItem('calcetto_token', authToken);
+        currentUser = res.user;
+        closeAuthModal();
+        await loadCurrentUser();
+        await loadPlayers();
+        await loadPoll();
+        alert(`Bentornato, ${currentUser.nickname || currentUser.fullName}!`);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    async function handleRegister() {
+      const email = document.getElementById('reg-email').value;
+      const password = document.getElementById('reg-password').value;
+      const fullName = document.getElementById('reg-name').value;
+      const nickname = document.getElementById('reg-nick').value;
+      const preferredPosition = document.getElementById('reg-pos').value;
+      const statAttack = parseInt(document.getElementById('reg-atk').value) || 70;
+      const statDefense = parseInt(document.getElementById('reg-def').value) || 65;
+      const statGoalkeeper = parseInt(document.getElementById('reg-gk').value) || 45;
+
+      if (!email || !password || !fullName) return alert('Compila tutti i campi obbligatori.');
+
+      try {
+        const res = await apiRequest('/api/auth/register', {
+          method: 'POST',
+          body: JSON.stringify({
+            email,
+            password,
+            fullName,
+            nickname,
+            preferredPosition,
+            statAttack,
+            statDefense,
+            statGoalkeeper
+          })
+        });
+        authToken = res.token;
+        localStorage.setItem('calcetto_token', authToken);
+        currentUser = res.user;
+        closeAuthModal();
+        await loadCurrentUser();
+        await loadPlayers();
+        await loadPoll();
+        alert(`Carta creata con successo! Benvenuto ${fullName}!`);
+      } catch (err) {
+        alert(err.message);
+      }
+    }
+
+    function handleLogout() {
+      authToken = null;
+      localStorage.removeItem('calcetto_token');
+      currentUser = null;
+      loadCurrentUser();
+      loadPoll();
+      alert('Disconnesso con successo.');
+    }
+
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+      document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-btn').forEach(btn => {
+        btn.classList.remove('text-emerald-400');
+        btn.classList.add('text-zinc-500');
+        if (btn.dataset.tab === tabId) {
+          btn.classList.add('text-emerald-400');
+          btn.classList.remove('text-zinc-500');
+        }
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>
