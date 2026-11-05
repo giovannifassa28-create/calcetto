@@ -4,6 +4,16 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Calcetto Manager - FUT Edition</title>
+  
+  <!-- PWA & Mobile Icons -->
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icon.svg">
+  <link rel="apple-touch-icon" href="/icon.svg">
+  <meta name="theme-color" content="#09090b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Calcetto">
+
   <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
   <style>
     .glow-gold { box-shadow: 0 0 25px rgba(234, 179, 8, 0.35); }
@@ -32,8 +42,11 @@
         </div>
       </div>
 
-      <!-- Auth User Pill & Logout -->
-      <div id="user-header-pill" class="flex items-center gap-2">
+      <!-- Auth User Pill, Install App & Logout -->
+      <div id="user-header-pill" class="flex items-center gap-1.5">
+        <button onclick="openInstallModal()" class="flex items-center gap-1 px-2.5 py-1 rounded-full bg-zinc-800/90 hover:bg-zinc-700 text-emerald-400 border border-emerald-500/30 text-[11px] font-bold transition-all">
+          <span>📲</span> Installa
+        </button>
         <button onclick="openAuthModal()" class="px-3 py-1 rounded-full bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold transition-all">
           Accedi
         </button>
@@ -387,6 +400,74 @@
             Conferma e Aggiorna Carte 🔥
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Modal Istruzioni Installazione PWA (Smartphone) -->
+    <div id="install-modal" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+      <div class="w-full max-w-sm bg-zinc-900 border border-zinc-800 rounded-3xl p-5 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-zinc-800 pb-3">
+          <div class="flex items-center gap-2">
+            <img src="/icon.svg" class="w-7 h-7 rounded-lg" alt="App Icon">
+            <h3 class="font-black text-sm text-white">Installa sullo Smartphone</h3>
+          </div>
+          <button onclick="closeInstallModal()" class="w-7 h-7 rounded-full bg-zinc-800 text-zinc-400 hover:text-white font-bold flex items-center justify-center text-xs">✕</button>
+        </div>
+
+        <!-- Selettore Sistema Operativo -->
+        <div class="flex bg-zinc-950 p-1 rounded-xl border border-zinc-800">
+          <button id="tab-btn-ios" onclick="switchInstallOS('ios')" class="flex-1 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-black transition-all">
+            📱 iPhone (iOS)
+          </button>
+          <button id="tab-btn-android" onclick="switchInstallOS('android')" class="flex-1 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition-all">
+            🤖 Android
+          </button>
+        </div>
+
+        <!-- Guida iPhone -->
+        <div id="install-guide-ios" class="space-y-2.5 text-xs">
+          <div class="flex items-start gap-2.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5">1</span>
+            <p class="text-zinc-300">Apri questo link con <strong>Safari</strong> (non dal browser interno di WhatsApp).</p>
+          </div>
+          <div class="flex items-start gap-2.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5">2</span>
+            <p class="text-zinc-300">Tocca il tasto <strong>Condividi</strong> in basso al centro (l'icona del quadrato con la freccia in su <span class="text-emerald-400 font-bold">⎋</span>).</p>
+          </div>
+          <div class="flex items-start gap-2.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5">3</span>
+            <p class="text-zinc-300">Scorri verso il basso e tocca <strong class="text-white">"Aggiungi alla schermata Home"</strong>.</p>
+          </div>
+          <div class="flex items-start gap-2.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5">4</span>
+            <p class="text-zinc-300">Tocca <strong>"Aggiungi"</strong> in alto a destra. L'icona dell'app apparirà sulla tua Home a schermo intero!</p>
+          </div>
+        </div>
+
+        <!-- Guida Android -->
+        <div id="install-guide-android" class="space-y-2.5 text-xs hidden">
+          <div id="native-android-install-btn-container" class="hidden">
+            <button onclick="triggerNativeInstall()" class="w-full py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-600 text-black font-black text-xs uppercase tracking-wider shadow-lg mb-2">
+              ⚡ Installa Subito con 1 Tap
+            </button>
+          </div>
+          <div class="flex items-start gap-2.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5">1</span>
+            <p class="text-zinc-300">Apri questo link con <strong>Google Chrome</strong>.</p>
+          </div>
+          <div class="flex items-start gap-2.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5">2</span>
+            <p class="text-zinc-300">Tocca i <strong>3 puntini verticali ⋮</strong> in alto a destra.</p>
+          </div>
+          <div class="flex items-start gap-2.5 bg-zinc-950 p-2.5 rounded-xl border border-zinc-800">
+            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5">3</span>
+            <p class="text-zinc-300">Tocca <strong class="text-white">"Installa app"</strong> (oppure "Aggiungi a schermata Home").</p>
+          </div>
+        </div>
+
+        <button onclick="closeInstallModal()" class="w-full py-2.5 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-bold text-xs">
+          Ho Capito, Chiudi
+        </button>
       </div>
     </div>
 
@@ -1043,6 +1124,59 @@
           btn.classList.add('text-emerald-400');
           btn.classList.remove('text-zinc-500');
         }
+      });
+    }
+
+    // Gestione Installazione PWA
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      const btnContainer = document.getElementById('native-android-install-btn-container');
+      if (btnContainer) btnContainer.classList.remove('hidden');
+    });
+
+    function openInstallModal() {
+      document.getElementById('install-modal').classList.remove('hidden');
+    }
+
+    function closeInstallModal() {
+      document.getElementById('install-modal').classList.add('hidden');
+    }
+
+    function switchInstallOS(os) {
+      const isIos = os === 'ios';
+      document.getElementById('install-guide-ios').classList.toggle('hidden', !isIos);
+      document.getElementById('install-guide-android').classList.toggle('hidden', isIos);
+
+      const btnIos = document.getElementById('tab-btn-ios');
+      const btnAnd = document.getElementById('tab-btn-android');
+
+      if (isIos) {
+        btnIos.className = 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-black transition-all';
+        btnAnd.className = 'flex-1 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition-all';
+      } else {
+        btnAnd.className = 'flex-1 py-1.5 rounded-lg text-xs font-bold bg-emerald-500 text-black transition-all';
+        btnIos.className = 'flex-1 py-1.5 rounded-lg text-xs font-bold text-zinc-400 hover:text-white transition-all';
+      }
+    }
+
+    async function triggerNativeInstall() {
+      if (!deferredPrompt) return;
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        closeInstallModal();
+      }
+      deferredPrompt = null;
+    }
+
+    // Registrazione Service Worker per PWA
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').catch(err => {
+          console.warn('Service Worker registration skipped:', err);
+        });
       });
     }
 

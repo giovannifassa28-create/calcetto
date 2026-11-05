@@ -1,0 +1,19 @@
+{
+  "name": "Calcetto FUT Manager",
+  "short_name": "Calcetto",
+  "description": "Fanta-calcetto con carte giocatore FUT, bilanciamento squadre e pagelle tra amici.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#09090b",
+  "theme_color": "#09090b",
+  "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "512x512 192x192 any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["sports", "games", "entertainment"]
+}

@@ -8,7 +8,7 @@ from datetime import datetime
 
 from fastapi import FastAPI, HTTPException, Depends, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, Response
 from pydantic import BaseModel, EmailStr
 
 # ==============================================================================
@@ -663,8 +663,26 @@ def get_leaderboard():
     return rows
 
 # ==============================================================================
-# FRONTEND HTML
+# PWA ASSETS & FRONTEND HTML
 # ==============================================================================
+
+@app.get("/manifest.json")
+def serve_manifest():
+    p = os.path.join(os.path.dirname(__file__), 'public', 'manifest.json')
+    with open(p, 'r', encoding='utf-8') as f:
+        return Response(content=f.read(), media_type="application/manifest+json")
+
+@app.get("/sw.js")
+def serve_sw():
+    p = os.path.join(os.path.dirname(__file__), 'public', 'sw.js')
+    with open(p, 'r', encoding='utf-8') as f:
+        return Response(content=f.read(), media_type="application/javascript")
+
+@app.get("/icon.svg")
+def serve_icon():
+    p = os.path.join(os.path.dirname(__file__), 'public', 'icon.svg')
+    with open(p, 'r', encoding='utf-8') as f:
+        return Response(content=f.read(), media_type="image/svg+xml")
 
 @app.get("/", response_class=HTMLResponse)
 def serve_index():
